@@ -12,25 +12,36 @@
     <h1 style="margin-left: 10px;">SWENG REST API</h1>
     <div class="button-container">
         <button id='btnRepos'>Repos</button>
-        <button id='btnIssues'>Issues</button>
+        <!-- <button id='btnIssues'>Issues</button> -->
         <button id='btnCommits'>Commits</button>
     </div>
+
+    <form id="commitForm" onsubmit="getCommits()">
+        <label for="ownerName">Owner name:</label><br>
+        <input type="text" id="ownerName" name="ownerName"><br>
+        <label for="repoName">Repo name:</label><br>
+        <input type="text" id="repoName" name="repoName"><br>
+        <input type="submit" value="submit">
+      </form>
 
     <div class="svg-container">
         <svg class="bar-chart"></svg>
     </div>
+
  
     <div id='divResult'></div>
+
+    <div class="lds-spinner"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
 </body>
 <script>
     const btnRepos = document.getElementById("btnRepos")
-    const btnIssues = document.getElementById("btnIssues")
+    //const btnIssues = document.getElementById("btnIssues")
     const btnCommits = document.getElementById("btnCommits")
 
     const divResult = document.getElementById("divResult")
 
     btnRepos.addEventListener("click", getRepos)
-    btnIssues.addEventListener("click", getIssues)
-    btnCommits.addEventListener("click", e=> getCommits())
+    // btnIssues.addEventListener("click", getIssues)
+    btnCommits.addEventListener("click", getCommits)
 </script>
 </html>

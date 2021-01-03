@@ -1,5 +1,9 @@
 async function getRepos(){
     clear();
+
+    var spinner = document.getElementsByClassName("lds-spinner")[0];
+    spinner.setAttribute("style", "display:block");
+
     const url = "https://api.github.com/search/repositories?q=stars:>100000";
     const response = await fetch(url);
     const result = await response.json();
@@ -24,146 +28,178 @@ async function getRepos(){
     // let barWidth = (svgWidth / stargazersCountArr.length);
     let barHeight = (svgHeight / stargazersCountArr.length);
 
+    var data = d3.zip(nameArr, stargazersCountValues, stargazersCountArr);
+
     var svg = d3.select('svg')
         .attr("width", svgWidth)
         .attr("height", svgHeight);
 
-    var barChart = svg.selectAll("rect")
-        .data(stargazersCountArr)
-        .enter()
+    var stargazers = svg.selectAll("g.stargazers").data(data);
+
+    var stargazersEnter = stargazers.enter().append("g");
+
+   
+    stargazersEnter
         .append("rect")
         .attr("height", barHeight - barPadding)
         .attr("x", 0)
         .attr("width", function (d) {
-            return d;
+            return d[2];
         })
-        // .attr("y", function(d) {
-        //     return svgHeight - d;
-        // })
-        // .attr("height", function(d) {
-        //     return d;
-        // })
-        // .attr("width", barWidth - barPadding)
         .attr("transform", function(d, i) {
             let translate = [0, barHeight * i];
             return "translate(" +  translate + ")";
         })
         .attr("fill", "yellow");
 
-    var numberLabels = svg.selectAll("text")
-        .data(stargazersCountValues)
-        .enter()
-        .append("text")
-        .text(function(d) {
-            return d;
-        })
-        .attr("y", function(d, i) {
-            return (barHeight) * i+12;
-        })
-        .attr("x", function(d) {
-            return (d / maxValue * svgWidth-50);
-        })
-        .attr("fill", "black")
-
-    var nameLabels = svg.selectAll("text")
-        .data(nameArr)
-        .enter()
+    stargazersEnter
         .append("text")
         .text(function(d){
-            return d;
+            return d[0];
         })
         .attr("y", function(d, i){
             return (barHeight) * i+12;
         })
         .attr("x", function(d){
-            return (d / maxValue);
+            return (d[0] / maxValue);
         })
         .attr("fill", "black");
+
+    stargazersEnter
+        .append("text")
+        .text(function(d) {
+            return d[1];
+        })
+        .attr("y", function(d, i) {
+            return (barHeight) * i+12;
+        })
+        .attr("x", function(d) {
+            return (d[1] / maxValue * svgWidth-50);
+        })
+        .attr("fill", "black");
+
+        spinner.setAttribute("style", "display:none");
 }
 
-async function getIssues(){
+// async function getIssues(){
+//     clearSVG();
+//     const url = "https://api.github.com/search/issues?q=author:raisedadead repo:freecodecamp/freecodecamp type:issue"
+//     const response = await fetch(url)
+//     const result = await response.json()
+
+//     result.items.forEach(i=>{
+//         const anchor = document.createElement("a")
+//         anchor.href = i.html_url;
+//         anchor.textContent = i.title;
+//         divResult.appendChild(anchor)
+//         divResult.appendChild(document.createElement("br"))
+//     })
+
+// }
+
+function getCommits(){
+
     clear();
-    const url = "https://api.github.com/search/issues?q=author:raisedadead repo:freecodecamp/freecodecamp type:issue"
-    const response = await fetch(url)
-    const result = await response.json()
 
-    result.items.forEach(i=>{
-        const anchor = document.createElement("a")
-        anchor.href = i.html_url;
-        anchor.textContent = i.title;
-        divResult.appendChild(anchor)
-        divResult.appendChild(document.createElement("br"))
-    })
+    var inputForm = document.getElementById("commitForm");
+    var ownerName = document.getElementById("ownerName").value;
+    var repoName = document.getElementById("repoName").value;
 
-}
+    if(!ownerName || !repoName){
+        //to-do
+        return;
+    }
 
-async function getCommits(url = "https://api.github.com/search/commits?q=repo:freecodecamp/freecodecamp author-date:2020-03-01..2020-03-31"){
-    clear();
-    //const url = "https://api.github.com/search/commits?q=repo:freecodecamp/freecodecamp author-date:2020-03-01..2020-03-31"
+    var spinner = document.getElementsByClassName("lds-spinner")[0];
+    spinner.setAttribute("style", "display:block");
+
+    //const url = `https://api.github.com/search/commits?q=repo:${ownerName}/${repoName}`;
+    const url = "https://api.github.com/search/commits?q=repo:freecodecamp/freecodecamp";
     const headers = {
         "Accept" : "application/vnd.github.cloak-preview"
     }
-    const response = await fetch(url,{
+    fetch(url,{
         "method" : "GET",
         "headers" : headers
-    })
+    }).then(function(response){
+        
+        const link = response.headers.get("link")
+        const links = link.split(",")
+        const urls = links.map(a=>{
+            return{
+                url : a.split(";")[0].replace("<", "").replace(">", ""),
+                title : a.split(";")[1]
+            }
+        })
 
-    const link = response.headers.get("link")
-    const links = link.split(",")
-    const urls = links.map(a=>{
-        return{
-            url : a.split(";")[0].replace("<", "").replace(">", ""),
-            title : a.split(";")[1]
-        }
-    })
+        const result = response.json();
 
-    const result = await response.json();
+        let uniqueAuthors = [];
+        let commitByAuthorCount = [];
 
-    let uniqueAuthors = [];
-    let commitByAuthorCount = [];
+        result.items.forEach(i=>{
+            const img = document.createElement("img")
+            img.src = i.author.avatar_url;
+            img.style.width = "32px"
+            img.style.height = "32px"
+            const anchor = document.createElement("a")
+            anchor.href = i.html_url;
+            anchor.textContent = i.commit.message.substr(0,120) + "...";
+            divResult.appendChild(img)
+            divResult.appendChild(anchor)
+            divResult.appendChild(document.createElement("br"))
 
-    result.items.forEach(i=>{
-        const img = document.createElement("img")
-        img.src = i.author.avatar_url;
-        img.style.width = "32px"
-        img.style.height = "32px"
-        const anchor = document.createElement("a")
-        anchor.href = i.html_url;
-        anchor.textContent = i.commit.message.substr(0,120) + "...";
-        divResult.appendChild(img)
-        divResult.appendChild(anchor)
-        divResult.appendChild(document.createElement("br"))
-
-        //
-        let authorName = i.authorName;
-        if (!uniqueAuthors.includes(authorName)) {
-            uniqueAuthors.push(authorName);
-        }
-    });
-
-    result.items.forEach(i=>{
-        let authorName = i.authorName;
-        uniqueAuthors.forEach(j=>{
-            if (authorName == uniqueAuthors[j]) {
-                if (commitByAuthorCount[j]) {
-                    commitByAuthorCount[j] = commitByAuthorCount[j] + 1;
-                } else {
-                    commitByAuthorCount[j] = 1;
-                }
+            //
+            let authorName = i.authorName;
+            if (!uniqueAuthors.includes(authorName)) {
+                uniqueAuthors.push(authorName);
             }
         });
-    });
 
-    urls.forEach(u=>{
-        const btn = document.createElement("button")
-        btn.textContent = u.title;
-        btn.addEventListener("click", e=> getCommits(u.url))
-        divResult.appendChild(btn);
+        result.items.forEach(i=>{
+            let authorName = i.authorName;
+            uniqueAuthors.forEach(j=>{
+                if (authorName == uniqueAuthors[j]) {
+                    if (commitByAuthorCount[j]) {
+                        commitByAuthorCount[j] = commitByAuthorCount[j] + 1;
+                    } else {
+                        commitByAuthorCount[j] = 1;
+                    }
+                }
+            });
+        });
 
+        urls.forEach(u=>{
+            const btn = document.createElement("button")
+            btn.textContent = u.title;
+            btn.addEventListener("click", e=> getCommits(u.url))
+            divResult.appendChild(btn);
+
+        })
+
+    }).then(function(response){
+        console.log(response)
     })
+    .catch(function(error){
+        console.log(error)
+    })
+
+    spinner.setAttribute("style", "display:none");
+}
+
+function displayCommitForm(){
+    clear();
+
+    var inputForm = document.getElementById("commitForm");
+    inputForm.setAttribute("style", "display:block");
 }
 
 function clear(){
-    while(divResult.firstChild)
-        divResult.removeChild(divResult.firstChild)
+    while(divResult.firstChild){
+        divResult.removeChild(divResult.firstChild);
+    }
+}
+
+function clearSVG(){
+    d3.select("svg").remove();
 }
