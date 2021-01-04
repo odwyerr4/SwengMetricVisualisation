@@ -4,7 +4,13 @@
   margin-left: 10px;
 }
 
-.svg-container {
+.svg-containerBar {
+  margin-left: 10px;
+  width: 0;
+  height: 0;
+}
+
+.svg-containerPie {
   margin-left: 10px;
   width: 0;
   height: 0;

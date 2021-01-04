@@ -84,7 +84,7 @@ function getCommits(){
 
     clear();
 
-    var inputForm = document.getElementById("commitForm");
+    //var inputForm = document.getElementById("commitForm");
     var ownerName = document.getElementById("ownerName").value;
     var repoName = document.getElementById("repoName").value;
 
@@ -114,37 +114,107 @@ function getCommits(){
         let commitByAuthorCount = [];
 
         result.forEach(i=>{
-            const img = document.createElement("img")
-            img.src = i.author.avatar_url;
-            img.style.width = "32px"
-            img.style.height = "32px"
-            const anchor = document.createElement("a")
-            anchor.href = i.html_url;
-            anchor.textContent = i.commit.message.substr(0,120) + "...";
-            divResult.appendChild(img)
-            divResult.appendChild(anchor)
-            divResult.appendChild(document.createElement("br"))
-
-            let authorName = i.authorName;
+            let authorName = i.author.login;
             if (!uniqueAuthors.includes(authorName)) {
                 uniqueAuthors.push(authorName);
             }
         });
 
         result.forEach(i=>{
-            let authorName = i.authorName;
+            let authorNames = i.author.login;
             uniqueAuthors.forEach(j=>{
-                if (authorName == uniqueAuthors[j]) {
+                if (authorNames == j) {
                     if (commitByAuthorCount[j]) {
                         commitByAuthorCount[j] = commitByAuthorCount[j] + 1;
+                        commitByAuthorCount.push(j);
                     } else {
                         commitByAuthorCount[j] = 1;
+                        commitByAuthorCount.push(j);
                     }
                 }
             });
         });
 
-        spinner.setAttribute("style", "display:none");
+    let authorCommitCount = [];
+    let x = 0;
+
+    for(i=0; i < uniqueAuthors.length+1; i++){
+        for(j=0; j < commitByAuthorCount.length+1; j++){
+            if(uniqueAuthors[i] = commitByAuthorCount[j]){
+                x = x + 1;
+                //authorCommitCount[i] = x;
+                authorCommitCount.push(i.x);
+            }
+        }
+    }
+
+    var data = d3.zip(uniqueAuthors, commitByAuthorCount)
+
+    var array1 = []; // better to define using [] instead of new Array();
+    var array2 = [];
+
+    for (var i = 0; i < commitByAuthorCount.length+1; i++) {
+        var split = commitByAuthorCount[i].split(":");  // just split once
+        array1.push(split[0]); // before the dot
+        array2.push(split[1]); // after the dot
+    }
+    console.log("array1", array1);
+    console.log("array2", array2);
+
+    const maxValue = Math.max.apply(Math, commitByAuthorCount.value);
+
+    let width = 1000; height = 350; barPadding = 5;
+
+    let barHeight = (height / uniqueAuthors.length);
+
+    const svg = d3.select('svg')
+        .attr('width', width)
+        .attr('height', height);
+
+    var commits = svg.selectAll("g.commits").data(data);
+
+    var commitsEnter = commits.enter().append("g");
+
+    commitsEnter
+        .append("rect")
+        .attr("height", barHeight - barPadding)
+        .attr("x", 0)
+        .attr("width", function (d) {
+            return d[1];
+        })
+        .attr("transform", function(d, i) {
+            let translate = [0, barHeight * i];
+            return "translate(" +  translate + ")";
+        })
+        .attr("fill", "yellow");
+
+    commitsEnter
+        .append("text")
+        .text(function(d){
+            return d[0];
+        })
+        .attr("y", function(d, i){
+            return (barHeight) * i+12;
+        })
+        .attr("x", function(d){
+            return (d[0] / maxValue);
+        })
+        .attr("fill", "black");
+
+    commitsEnter
+        .append("text")
+        .text(function(d) {
+            return d[1];
+        })
+        .attr("y", function(d, i) {
+            return (barHeight) * i+12;
+        })
+        .attr("x", function(d) {
+            return (d[1] / maxValue * svgWidth-50);
+        })
+        .attr("fill", "black");
+
+    
     })
     .catch(function(error) {
         console.log(error);
