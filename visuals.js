@@ -25,7 +25,6 @@ async function getRepos(){
         stargazersCountArr.push(i.stargazers_count / maxValue * svgWidth-55);
     });
 
-    // let barWidth = (svgWidth / stargazersCountArr.length);
     let barHeight = (svgHeight / stargazersCountArr.length);
 
     var data = d3.zip(nameArr, stargazersCountValues, stargazersCountArr);
@@ -81,22 +80,6 @@ async function getRepos(){
         spinner.setAttribute("style", "display:none");
 }
 
-// async function getIssues(){
-//     clearSVG();
-//     const url = "https://api.github.com/search/issues?q=author:raisedadead repo:freecodecamp/freecodecamp type:issue"
-//     const response = await fetch(url)
-//     const result = await response.json()
-
-//     result.items.forEach(i=>{
-//         const anchor = document.createElement("a")
-//         anchor.href = i.html_url;
-//         anchor.textContent = i.title;
-//         divResult.appendChild(anchor)
-//         divResult.appendChild(document.createElement("br"))
-//     })
-
-// }
-
 function getCommits(){
 
     clear();
@@ -106,38 +89,31 @@ function getCommits(){
     var repoName = document.getElementById("repoName").value;
 
     if(!ownerName || !repoName){
-        //to-do
         return;
     }
+
+    ownerName = ownerName.toLowerCase();
+    repoName = repoName.toLowerCase();
 
     var spinner = document.getElementsByClassName("lds-spinner")[0];
     spinner.setAttribute("style", "display:block");
 
-    //const url = `https://api.github.com/search/commits?q=repo:${ownerName}/${repoName}`;
-    const url = "https://api.github.com/search/commits?q=repo:freecodecamp/freecodecamp";
+    const url = `https://api.github.com/repos/${ownerName}/${repoName}/commits`;
+    // const url = "https://api.github.com/repos/freecodecamp/freecodecamp/commits";
     const headers = {
         "Accept" : "application/vnd.github.cloak-preview"
-    }
-    fetch(url,{
-        "method" : "GET",
-        "headers" : headers
-    }).then(function(response){
-        
-        const link = response.headers.get("link")
-        const links = link.split(",")
-        const urls = links.map(a=>{
-            return{
-                url : a.split(";")[0].replace("<", "").replace(">", ""),
-                title : a.split(";")[1]
-            }
-        })
+    };
 
-        const result = response.json();
+    fetch(url, {
+        "method" : "GET",
+        "headers" : headers})
+    .then(response => response.json())
+    .then(function(result) {
 
         let uniqueAuthors = [];
         let commitByAuthorCount = [];
 
-        result.items.forEach(i=>{
+        result.forEach(i=>{
             const img = document.createElement("img")
             img.src = i.author.avatar_url;
             img.style.width = "32px"
@@ -149,14 +125,13 @@ function getCommits(){
             divResult.appendChild(anchor)
             divResult.appendChild(document.createElement("br"))
 
-            //
             let authorName = i.authorName;
             if (!uniqueAuthors.includes(authorName)) {
                 uniqueAuthors.push(authorName);
             }
         });
 
-        result.items.forEach(i=>{
+        result.forEach(i=>{
             let authorName = i.authorName;
             uniqueAuthors.forEach(j=>{
                 if (authorName == uniqueAuthors[j]) {
@@ -169,26 +144,17 @@ function getCommits(){
             });
         });
 
-        urls.forEach(u=>{
-            const btn = document.createElement("button")
-            btn.textContent = u.title;
-            btn.addEventListener("click", e=> getCommits(u.url))
-            divResult.appendChild(btn);
-
-        })
-
-    }).then(function(response){
-        console.log(response)
+        spinner.setAttribute("style", "display:none");
     })
-    .catch(function(error){
-        console.log(error)
+    .catch(function(error) {
+        console.log(error);
+        spinner.setAttribute("style", "display:none");
     })
-
-    spinner.setAttribute("style", "display:none");
 }
 
 function displayCommitForm(){
     clear();
+    clearSVG();
 
     var inputForm = document.getElementById("commitForm");
     inputForm.setAttribute("style", "display:block");
