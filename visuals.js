@@ -1,5 +1,4 @@
 async function getRepos(){
-    clear();
 
     var spinner = document.getElementsByClassName("lds-spinner")[0];
     spinner.setAttribute("style", "display:block");
@@ -122,50 +121,32 @@ function getCommits(){
 
         result.forEach(i=>{
             let authorNames = i.author.login;
-            uniqueAuthors.forEach(j=>{
-                if (authorNames == j) {
+            for(j=0; j<uniqueAuthors.length; j++){
+                if (authorNames == uniqueAuthors[j]) {
                     if (commitByAuthorCount[j]) {
-                        commitByAuthorCount[j] = commitByAuthorCount[j] + 1;
-                        commitByAuthorCount.push(j);
+                        commitByAuthorCount[j] = commitByAuthorCount[j] + 1;            
                     } else {
                         commitByAuthorCount[j] = 1;
-                        commitByAuthorCount.push(j);
                     }
                 }
-            });
+            }
         });
 
-    let authorCommitCount = [];
-    let x = 0;
-
-    for(i=0; i < uniqueAuthors.length+1; i++){
-        for(j=0; j < commitByAuthorCount.length+1; j++){
-            if(uniqueAuthors[i] = commitByAuthorCount[j]){
-                x = x + 1;
-                //authorCommitCount[i] = x;
-                authorCommitCount.push(i.x);
-            }
-        }
-    }
-
-    var data = d3.zip(uniqueAuthors, commitByAuthorCount)
-
-    var array1 = []; // better to define using [] instead of new Array();
-    var array2 = [];
-
-    for (var i = 0; i < commitByAuthorCount.length+1; i++) {
-        var split = commitByAuthorCount[i].split(":");  // just split once
-        array1.push(split[0]); // before the dot
-        array2.push(split[1]); // after the dot
-    }
-    console.log("array1", array1);
-    console.log("array2", array2);
+    var data = d3.zip(uniqueAuthors, commitByAuthorCount);
 
     const maxValue = Math.max.apply(Math, commitByAuthorCount.value);
 
     let width = 1000; height = 350; barPadding = 5;
 
     let barHeight = (height / uniqueAuthors.length);
+
+    let scale = 0;
+
+    for(i=0; i<commitByAuthorCount.length; i++){
+        if(commitByAuthorCount[i]>scale){
+            scale = commitByAuthorCount[i];
+        }
+    }
 
     const svg = d3.select('svg')
         .attr('width', width)
@@ -180,13 +161,13 @@ function getCommits(){
         .attr("height", barHeight - barPadding)
         .attr("x", 0)
         .attr("width", function (d) {
-            return d[1];
+            return d[1] * (1000/scale);
         })
         .attr("transform", function(d, i) {
             let translate = [0, barHeight * i];
             return "translate(" +  translate + ")";
         })
-        .attr("fill", "yellow");
+        .attr("fill", "red");
 
     commitsEnter
         .append("text")
@@ -194,7 +175,7 @@ function getCommits(){
             return d[0];
         })
         .attr("y", function(d, i){
-            return (barHeight) * i+12;
+            return (barHeight) * i+40;
         })
         .attr("x", function(d){
             return (d[0] / maxValue);
@@ -207,7 +188,7 @@ function getCommits(){
             return d[1];
         })
         .attr("y", function(d, i) {
-            return (barHeight) * i+12;
+            return (barHeight) * i+25;
         })
         .attr("x", function(d) {
             return (d[1] / maxValue * svgWidth-50);
@@ -223,7 +204,6 @@ function getCommits(){
 }
 
 function displayCommitForm(){
-    clear();
     clearSVG();
 
     var inputForm = document.getElementById("commitForm");
